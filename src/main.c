@@ -1,7 +1,9 @@
 /*
- * Copyright 2023 Grupo MSA
+ * Copyright (c) 2023, Fabiola de las Casas Escardo <fabioladelascasas@gmail.com>
  * All rights reserved.
- *
+ * License: bsd-3-clause (see LICENSE.txt)
+ * Version: 1.0
+ * 
  */
 
 /*******************************************************************************
@@ -19,12 +21,20 @@
 #include "sdkconfig.h"
 
 #include "DHT22.h"
+#include "uartDriver.h"
 #include "main.h"
 
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
 #define BUF_SIZE (1024)
+
+#define DHT22_GPIO      GPIO_NUM_4  
+
+#define UART_GPIO_TXD   GPIO_NUM_17
+#define UART_GPIO_RXD   GPIO_NUM_16
+#define UART_PORT       UART_NUM_2
+#define UART_BAUDRATE   115200  
 
 /*******************************************************************************
  * Prototypes
@@ -44,7 +54,7 @@ void DHT_task(void *arg)
     char data_temp[12];
     int res;
 
-    DHT_SetGpio(DHT22_PIN);
+    DHT_SetGpio(DHT22_GPIO);
     
     while(1)
     {
@@ -62,10 +72,30 @@ void DHT_task(void *arg)
     }
 }
 
+void UART_task(void *arg)
+{
+    UART_Config(UART_PORT, UART_BAUDRATE, BUF_SIZE, UART_GPIO_TXD, UART_GPIO_RXD);
+
+    while (1) 
+    {
+        uart_write_bytes(UART_NUM_2, data_humTemp, strlen(data_humTemp));
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
+    }
+}
+
 /*******************************************************************************
  * Code - public
  ******************************************************************************/
 void app_main() 
 {
 	xTaskCreate(DHT_task, "DHT_task", DHT_TASK_STACK, NULL, DHT_TASK_PRIORITY, NULL );
+    xTaskCreate(UART_task, "UART_task", UART_TASK_STACK, NULL, UART_TASK_PRIORITY, NULL );
+
+    vTaskStartScheduler();
+
+	/* We should never get here as control is now taken by the scheduler */
+	while (1)
+	{
+		/* Infinite loop */
+	}
 }

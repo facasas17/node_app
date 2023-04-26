@@ -119,6 +119,8 @@ static uint8_t DHT_Init(void)
 //	ESP_LOGI( TAG, "Response = %d", time );
 	if( time<0 ) 
 		return DHT_TIMEOUT_ERROR;
+	
+	return DHT_OK;
 }
 
 static void DHT_SeparateHumData(uint8_t *AllData)

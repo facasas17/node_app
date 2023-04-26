@@ -6,30 +6,32 @@
  * 
  */
 
-#ifndef MAIN_MAIN_H_
-#define MAIN_MAIN_H_
+#ifndef UARTDRIVER_UARTDRIVER_H_
+#define UARTDRIVER_UARTDRIVER_H_
 
 /*******************************************************************************
  * Includes
  ******************************************************************************/
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-
+#include "driver/uart.h"
 
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
 
-/*	Prioridades de las tareas */
-#define DHT_TASK_PRIORITY  				(configMAX_PRIORITIES-1)
-#define UART_TASK_PRIORITY  			(configMAX_PRIORITIES-2)
-
-/* Stack de las tareas */
-#define DHT_TASK_STACK 				1024*2
-#define UART_TASK_STACK				1024*2
 
 /*******************************************************************************
  * API
  ******************************************************************************/
+/* 
+ * @brief Configure parameters of an UART driver, communication pins and install the driver 
+ * 
+ * @param port UART to configure
+ * @param baudrate
+ * @param buff_size size of buffer for TX and RX
+ * @param tx_pin GPIO for TX data
+ * @param rx_pin GPIO for RX data
+ * 
+ */
+void UART_Config(uint8_t port, uint32_t baudrate, uint32_t buff_size, uint8_t tx_pin, uint8_t rx_pin);
 
-#endif /* MAIN_MAIN_H_ */
+#endif /* UARTDRIVER_UARTDRIVER_H_ */
