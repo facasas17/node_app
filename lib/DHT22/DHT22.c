@@ -29,6 +29,7 @@
 #include "freertos/task.h"
 #include "esp_system.h"
 #include "driver/gpio.h"
+#include <rom/ets_sys.h>
 
 #include "DHT22.h"
 
@@ -56,7 +57,7 @@ static uint8_t getSignalLevel( uint8_t usTimeOut, uint8_t state );
 /* 
  * @brief DHT will keep the line low for 80 us and then high for 80us 
  */
-static uint8_t DHT_Init(void);
+static int8_t DHT_Init(void);
 
 /* 
  * @brief Get humidity from AllData[0] and AllData[1] 
@@ -85,12 +86,12 @@ static uint8_t getSignalLevel( uint8_t usTimeOut, uint8_t state )
 			return -1;
 		
 		++uSec;
-		ets_delay_us(1);		// uSec delay
+		ets_delay_us(1);		// uSec blocking delay
 	}
 	return uSec;
 }
 
-static uint8_t DHT_Init(void)
+static int8_t DHT_Init(void)
 {
 	int time;
 
@@ -99,11 +100,11 @@ static uint8_t DHT_Init(void)
 
 	/* Pull down for 3ms for wake up */
 	gpio_set_level( DHT_GPIO, 0 );
-	ets_delay_us( 3000 );			
+	ets_delay_us( 3000 );				// uSec blocking delay			
 
 	/* Pull up for 25us for data */
 	gpio_set_level( DHT_GPIO, 1 );
-	ets_delay_us( 25 );
+	ets_delay_us( 25 );					// uSec blocking delay
 
 	/* Change to input mode */
 	gpio_set_direction( DHT_GPIO, GPIO_MODE_INPUT );
@@ -196,7 +197,6 @@ int DHT_ReadData()
 	uint8_t dhtData[MAXdhtData];
 	uint8_t byteInx = 0;
 	uint8_t bitInx = 7;
-	uint8_t res;
 
 	for (uint8_t k = 0; k<MAXdhtData; k++) 
 		dhtData[k] = 0;
@@ -234,10 +234,10 @@ int DHT_ReadData()
 			bitInx--;
 	}
 
-	DHT_SeparateHumData(&dhtData);
-	DHT_SeparateTempData(&dhtData);
+	DHT_SeparateHumData(dhtData);
+	DHT_SeparateTempData(dhtData);
 
-	return DHT_CheckSum(&dhtData);
+	return DHT_CheckSum(dhtData);
 }
 
 float DHT_GetHumidity(void) 

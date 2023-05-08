@@ -21,7 +21,7 @@
  ******************************************************************************/
 
 /*	Prioridades de las tareas */
-#define DHT_TASK_PRIORITY  				(configMAX_PRIORITIES-1)
+#define DHT_TASK_PRIORITY  				(configMAX_PRIORITIES-5)
 #define UART_TASK_PRIORITY  			(configMAX_PRIORITIES-2)
 
 /* Stack de las tareas */

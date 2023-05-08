@@ -68,7 +68,7 @@ void DHT_task(void *arg)
         strcat(( char *)data_humTemp, ( char *)data_temp);
 		// -- wait at least 2 sec before reading again ------------
 		// The interval of whole process must be beyond 2 seconds !! 
-		vTaskDelay( 2000 / portTICK_RATE_MS );
+		vTaskDelay( 2000 / portTICK_PERIOD_MS );
     }
 }
 
@@ -79,7 +79,7 @@ void UART_task(void *arg)
     while (1) 
     {
         uart_write_bytes(UART_NUM_2, data_humTemp, strlen(data_humTemp));
-        vTaskDelay(2000 / portTICK_PERIOD_MS);
+        vTaskDelay(5000 / portTICK_PERIOD_MS);
     }
 }
 
