@@ -9,7 +9,6 @@
 /*******************************************************************************
  * Includes
  ******************************************************************************/
-#include "driver/uart.h"
 #include "driver/gpio.h"
 #include <string.h>
 
@@ -27,7 +26,7 @@
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
-#define BUF_SIZE (1024)
+#define BUF_SIZE        (1024)
 
 #define DHT22_GPIO      GPIO_NUM_4  
 
@@ -36,6 +35,7 @@
 #define UART_PORT       UART_NUM_2
 #define UART_BAUDRATE   115200  
 
+#define COMMAND     "NODE1"
 /*******************************************************************************
  * Prototypes
  ******************************************************************************/
@@ -43,42 +43,71 @@
 /*******************************************************************************
  * Variables
  ******************************************************************************/
-char data_humTemp[BUF_SIZE];
+QueueHandle_t uart_queue;    // Queue to hold UART data
 
 /*******************************************************************************
  * Code - private
  ******************************************************************************/
-void DHT_task(void *arg)
+uint8_t calc_crc(uint8_t *data, size_t len) 
 {
-    char data_hum[10];
-    char data_temp[12];
-    int res;
+    uint8_t crc = 0;
 
-    DHT_SetGpio(DHT22_GPIO);
-    
-    while(1)
+    for (size_t i = 0; i < len; i++) 
     {
-        res = DHT_ReadData();
-
-		DHT_ErrorHandler(res);
-
-        snprintf(data_hum, 10, "Hum %.1f\n", DHT_GetHumidity()); // puts string into buffer
-        snprintf(data_temp, 12, "Tmp %.1f\r\n", DHT_GetTemperature()); // puts string into buffer
-        strcat(( char *)data_humTemp, ( char *)data_hum);
-        strcat(( char *)data_humTemp, ( char *)data_temp);
-		// -- wait at least 2 sec before reading again ------------
-		// The interval of whole process must be beyond 2 seconds !! 
-		vTaskDelay( 2000 / portTICK_PERIOD_MS );
+        crc ^= data[i];
+        for (int j = 0; j < 8; j++) 
+        {
+            if (crc & 0x80)
+                crc = (crc << 1) ^ 0x31;
+            else
+                crc <<= 1;
+        }
     }
+
+    return crc;
+}
+
+void add_CRC(char *buff)
+{
+    uint8_t crc = calc_crc((uint8_t *)buff, strlen(buff));
+    sprintf(buff + strlen(buff), "%02X\r\n", crc);
+}
+
+void read_DHTdata(char *buff)
+{
+    int res;
+    float temperature = 0.0f, humidity = 0.0f;
+
+    res = DHT_ReadData();
+	DHT_ErrorHandler(res);
+    
+    humidity = DHT_GetHumidity();
+    temperature = DHT_GetTemperature();
+
+    sprintf(buff, "NODE1,%.2f,%.2f,", humidity, temperature);
 }
 
 void UART_task(void *arg)
 {
-    UART_Config(UART_PORT, UART_BAUDRATE, BUF_SIZE, UART_GPIO_TXD, UART_GPIO_RXD);
+    uint8_t *data = (uint8_t *)malloc(BUF_SIZE);
+    int len;
+    char data_humTemp[BUF_SIZE];
 
     while (1) 
     {
-        uart_write_bytes(UART_NUM_2, data_humTemp, strlen(data_humTemp));
+        len = uart_read_bytes(UART_PORT, data, BUF_SIZE - 1, pdMS_TO_TICKS(100));
+
+        if (len > 0) 
+        {
+            data[len] = '\0';
+
+            if (strcmp((char *)data, COMMAND) == 0) 
+            {
+                read_DHTdata(data_humTemp);
+                add_CRC(data_humTemp);
+                UART_SendData(UART_PORT, data_humTemp, strlen(data_humTemp));
+            }
+        }
         vTaskDelay(5000 / portTICK_PERIOD_MS);
     }
 }
@@ -88,7 +117,9 @@ void UART_task(void *arg)
  ******************************************************************************/
 void app_main() 
 {
-	xTaskCreate(DHT_task, "DHT_task", DHT_TASK_STACK, NULL, DHT_TASK_PRIORITY, NULL );
+    UART_Config(UART_PORT, UART_BAUDRATE, BUF_SIZE, UART_GPIO_TXD, UART_GPIO_RXD, &uart_queue);
+    DHT_SetGpio(DHT22_GPIO);
+
     xTaskCreate(UART_task, "UART_task", UART_TASK_STACK, NULL, UART_TASK_PRIORITY, NULL );
 
     vTaskStartScheduler();

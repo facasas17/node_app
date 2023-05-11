@@ -13,11 +13,12 @@
  * Includes
  ******************************************************************************/
 #include "driver/uart.h"
+#include "freertos/FreeRTOS.h"
 
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
-
+#define UART_QUEUE_SIZE     20
 
 /*******************************************************************************
  * API
@@ -30,8 +31,20 @@
  * @param buff_size size of buffer for TX and RX
  * @param tx_pin GPIO for TX data
  * @param rx_pin GPIO for RX data
+ * @param data_queue queue to store data received through uart
  * 
  */
-void UART_Config(uint8_t port, uint32_t baudrate, uint32_t buff_size, uint8_t tx_pin, uint8_t rx_pin);
+void UART_Config(uint8_t port, uint32_t baudrate, uint32_t buff_size, uint8_t tx_pin, 
+                    uint8_t rx_pin, QueueHandle_t *data_queue);
+
+/*
+ * @brief Send data through the UART
+ *
+ * @param port UART to send data through
+ * @param *data buffer of data to send
+ * @param len size of buffer
+ * 
+*/
+void UART_SendData(uint8_t port, char *data, uint16_t len);
 
 #endif /* UARTDRIVER_UARTDRIVER_H_ */
