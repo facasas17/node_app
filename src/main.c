@@ -74,19 +74,23 @@ static void add_CRC(char *buff)
 static void mainTask(void *arg)
 {
     int ret;
-
+    
+    data_humTemp[0] = '\0';     // Reset buffer
     UART_config();
     DHT_SetGpio( DHT22_PIN );
     
     while (1) 
     {
-        ret = DHT_ReadData();
-		DHT_ErrorHandler(ret);
+        if(data_humTemp[0] == '\0')
+        {
+            ret = DHT_ReadData();
+		    DHT_ErrorHandler(ret);
 
-        sprintf(data_humTemp, "Hum %.1f  ", DHT_GetHumidity()); // puts string into buffer
-        sprintf(data_humTemp + strlen(data_humTemp), "Tmp %.1f", DHT_GetTemperature()); // puts string into buffer
+            sprintf(data_humTemp, "Hum %.1f  ", DHT_GetHumidity()); // puts string into buffer
+            sprintf(data_humTemp + strlen(data_humTemp), "Tmp %.1f", DHT_GetTemperature()); // puts string into buffer
         
-        add_CRC(( char *)data_humTemp);
+            add_CRC(( char *)data_humTemp);
+        }
 
         if( ESP_OK == uart_wait_tx_done(UART_PORT, TASK_DELAY))
         {
