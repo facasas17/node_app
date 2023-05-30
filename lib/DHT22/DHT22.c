@@ -41,7 +41,7 @@ static const char* TAG = "DHT";
 /*******************************************************************************
  * Variables
  ******************************************************************************/
-uint8_t DHT_GPIO = 4;				// my default DHT pin = 4
+uint8_t DHT_GPIO;				// my default DHT pin = 4
 
 float humidity = 0.;
 float temperature = 0.;

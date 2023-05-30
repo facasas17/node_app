@@ -1,7 +1,8 @@
 {
     "files.associations": {
-        "uart.h": "c",
-        "gpio.h": "c",
-        "uartdriver.h": "c"
+        "array": "c",
+        "string": "c",
+        "string_view": "c",
+        "ratio": "c"
     }
 }

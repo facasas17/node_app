@@ -1,53 +1,43 @@
-/*
- * Copyright (c) 2023, Fabiola de las Casas Escardo <fabioladelascasas@gmail.com>
- * All rights reserved.
- * License: bsd-3-clause (see LICENSE.txt)
- * Version: 1.0
- * 
- */
+/* UART Echo Example
 
-/*******************************************************************************
- * Includes
- ******************************************************************************/
-#include "driver/gpio.h"
-#include <string.h>
+   This example code is in the Public Domain (or CC0 licensed, at your option.)
 
+   Unless required by applicable law or agreed to in writing, this
+   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+   CONDITIONS OF ANY KIND, either express or implied.
+*/
 #include <stdio.h>
-#include "esp_system.h"
-#include "rom/ets_sys.h"
-#include "nvs_flash.h"
+#include <string.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "driver/uart.h"
 #include "driver/gpio.h"
-#include "sdkconfig.h"
 
 #include "DHT22.h"
-#include "uartDriver.h"
-#include "main.h"
 
-/*******************************************************************************
- * Definitions
- ******************************************************************************/
-#define BUF_SIZE        (1024)
+/**
+ * This is an example which echos any data it receives on UART1 back to the sender,
+ * with hardware flow control turned off. It does not use UART driver event queue.
+ *
+ * - Port: UART2
+ * - Receive (Rx) buffer: on
+ * - Transmit (Tx) buffer: off
+ * - Flow control: off
+ * - Event queue: off
+ * - Pin assignment: see defines below
+ */
 
-#define DHT22_GPIO      GPIO_NUM_4  
+#define ECHO_TEST_TXD  (GPIO_NUM_17)
+#define ECHO_TEST_RXD  (GPIO_NUM_16)
+#define ECHO_TEST_RTS  (UART_PIN_NO_CHANGE)
+#define ECHO_TEST_CTS  (UART_PIN_NO_CHANGE)
+#define DHT22_PIN       GPIO_NUM_4  
 
-#define UART_GPIO_TXD   GPIO_NUM_17
-#define UART_GPIO_RXD   GPIO_NUM_16
-#define UART_PORT       UART_NUM_2
-#define UART_BAUDRATE   115200  
+#define BUF_SIZE (1024)
 
-#define COMMAND     "NODE1"
-/*******************************************************************************
- * Prototypes
- ******************************************************************************/
+char Txdata[BUF_SIZE];// = (char*) malloc(BUF_SIZE);
+char data_humTemp[BUF_SIZE];
 
-/*******************************************************************************
- * Variables
- ******************************************************************************/
-QueueHandle_t uart_queue;    // Queue to hold UART data
-
-/*******************************************************************************
- * Code - private
- ******************************************************************************/
 uint8_t calc_crc(uint8_t *data, size_t len) 
 {
     uint8_t crc = 0;
@@ -58,7 +48,7 @@ uint8_t calc_crc(uint8_t *data, size_t len)
         for (int j = 0; j < 8; j++) 
         {
             if (crc & 0x80)
-                crc = (crc << 1) ^ 0x31;
+                crc = (crc << 1) ^ 0x07;
             else
                 crc <<= 1;
         }
@@ -70,63 +60,74 @@ uint8_t calc_crc(uint8_t *data, size_t len)
 void add_CRC(char *buff)
 {
     uint8_t crc = calc_crc((uint8_t *)buff, strlen(buff));
-    sprintf(buff + strlen(buff), "%02X\r\n", crc);
+    sprintf(buff + strlen(buff), "\r\n%02X\r\n", crc);
 }
 
-void read_DHTdata(char *buff)
+static void echo_task(void *arg)
 {
-    int res;
-    float temperature = 0.0f, humidity = 0.0f;
+    /* Configure parameters of an UART driver,
+     * communication pins and install the driver */
+    uart_config_t uart_config = {
+        .baud_rate = 115200,
+        .data_bits = UART_DATA_8_BITS,
+        .parity    = UART_PARITY_DISABLE,
+        .stop_bits = UART_STOP_BITS_1,
+        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+        .source_clk = UART_SCLK_APB,
+    };
+    uart_driver_install(UART_NUM_2, BUF_SIZE * 2, 0, 0, NULL, 0);
+    uart_param_config(UART_NUM_2, &uart_config);
+    uart_set_pin(UART_NUM_2, ECHO_TEST_TXD, ECHO_TEST_RXD, ECHO_TEST_RTS, ECHO_TEST_CTS);
 
-    res = DHT_ReadData();
-	DHT_ErrorHandler(res);
+    // Configure a temporary buffer for the incoming data
+    // char* Txdata = (char*) malloc(BUF_SIZE);
     
-    humidity = DHT_GetHumidity();
-    temperature = DHT_GetTemperature();
-
-    sprintf(buff, "NODE1,%.2f,%.2f,", humidity, temperature);
-}
-
-void UART_task(void *arg)
-{
-    uint8_t *data = (uint8_t *)malloc(BUF_SIZE);
-    int len;
-    char data_humTemp[BUF_SIZE];
-
-    while (1) 
-    {
-        len = uart_read_bytes(UART_PORT, data, BUF_SIZE - 1, pdMS_TO_TICKS(100));
-
-        if (len > 0) 
-        {
-            data[len] = '\0';
-
-            if (strcmp((char *)data, COMMAND) == 0) 
-            {
-                read_DHTdata(data_humTemp);
-                add_CRC(data_humTemp);
-                UART_SendData(UART_PORT, data_humTemp, strlen(data_humTemp));
-            }
-        }
-        vTaskDelay(5000 / portTICK_PERIOD_MS);
+    DHT_SetGpio( DHT22_PIN );
+    
+    while (1) {
+        data_humTemp[0] = '\0';
+        int ret = DHT_ReadData();
+		DHT_ErrorHandler(ret);
+        sprintf(data_humTemp + strlen(data_humTemp), "Hum %.1f  ", DHT_GetHumidity()); // puts string into buffer
+        sprintf(data_humTemp + strlen(data_humTemp), "Tmp %.1f", DHT_GetTemperature()); // puts string into buffer
+        //snprintf(data_hum, 10, "Hum %.1f  ", DHT_GetHumidity()); // puts string into buffer
+        //snprintf(data_temp, 12, "Tmp %.1f\r\n", DHT_GetTemperature()); // puts string into buffer
+        // strcat(( char *)data_humTemp, ( char *)data_hum);
+        // strcat(( char *)data_humTemp, ( char *)data_temp);
+        
+        add_CRC(( char *)data_humTemp);
+        uart_write_bytes(UART_NUM_2, data_humTemp, strlen(data_humTemp));
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
     }
 }
 
-/*******************************************************************************
- * Code - public
- ******************************************************************************/
-void app_main() 
+void DHT_task(void *arg)
 {
-    UART_Config(UART_PORT, UART_BAUDRATE, BUF_SIZE, UART_GPIO_TXD, UART_GPIO_RXD, &uart_queue);
-    DHT_SetGpio(DHT22_GPIO);
+    char data_hum[10];
+    char data_temp[12];
+    //uint16_t num = 0;
+    
+    DHT_SetGpio( DHT22_PIN );
+    
+    while(1)
+    {
+        // sprintf (Txdata, "Hello world index = %d\r\n", num++);
+        // vTaskDelay(2000 / portTICK_PERIOD_MS);
+        int ret = DHT_ReadData();
+		DHT_ErrorHandler(ret);
 
-    xTaskCreate(UART_task, "UART_task", UART_TASK_STACK, NULL, UART_TASK_PRIORITY, NULL );
+        snprintf(data_hum, 10, "Hum %.1f\n", DHT_GetHumidity()); // puts string into buffer
+        snprintf(data_temp, 12, "Tmp %.1f\r\n", DHT_GetTemperature()); // puts string into buffer
+        strcat(( char *)data_humTemp, ( char *)data_hum);
+        strcat(( char *)data_humTemp, ( char *)data_temp);
+		// -- wait at least 2 sec before reading again ------------
+		// The interval of whole process must be beyond 2 seconds !! 
+		vTaskDelay( 2000 / portTICK_PERIOD_MS );
+    }
+}
 
-    vTaskStartScheduler();
-
-	/* We should never get here as control is now taken by the scheduler */
-	while (1)
-	{
-		/* Infinite loop */
-	}
+void app_main(void)
+{
+    xTaskCreate(echo_task, "uart_echo_task", 1024*2, NULL, configMAX_PRIORITIES-2, NULL);
+	//xTaskCreate(DHT_task, "DHT_task", 1024*2, NULL, configMAX_PRIORITIES-1, NULL );
 }
