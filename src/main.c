@@ -34,6 +34,9 @@
 #define RX_BUF_SIZE     1024
 #define TX_BUF_SIZE     1024
 #define TASK_DELAY      3000
+
+const char NODE_TAG[] = "NODE1";
+
 /*******************************************************************************
  * Prototypes
  ******************************************************************************/
@@ -45,6 +48,7 @@ static void mainTask(void *arg);
  * Variables
  ******************************************************************************/
 char data_humTemp[TX_BUF_SIZE];
+char rx_Node[RX_BUF_SIZE];
 
 /*******************************************************************************
  * Code - private
@@ -74,29 +78,36 @@ static void add_CRC(char *buff)
 static void mainTask(void *arg)
 {
     int ret;
-    
+    int res_uart;
+
     data_humTemp[0] = '\0';     // Reset buffer
     UART_config();
     DHT_SetGpio( DHT22_PIN );
     
     while (1) 
     {
-        if(data_humTemp[0] == '\0')
+        uart_read_bytes(UART_PORT, rx_Node, strlen(rx_Node), TASK_DELAY);
+        res_uart = strncmp ((char *)rx_Node, (char *)NODE_TAG, strlen(NODE_TAG));
+     
+        if( !res_uart )     // Si se recibe el mismo ID del nodo
         {
-            ret = DHT_ReadData();
-		    DHT_ErrorHandler(ret);
+            if(data_humTemp[0] == '\0')
+            {
+                ret = DHT_ReadData();
+                DHT_ErrorHandler(ret);
 
-            sprintf(data_humTemp, "Hum %.1f  ", DHT_GetHumidity()); // puts string into buffer
-            sprintf(data_humTemp + strlen(data_humTemp), "Tmp %.1f", DHT_GetTemperature()); // puts string into buffer
-        
-            add_CRC(( char *)data_humTemp);
-        }
+                sprintf(data_humTemp, "Hum %.1f  ", DHT_GetHumidity()); // puts string into buffer
+                sprintf(data_humTemp + strlen(data_humTemp), "Tmp %.1f", DHT_GetTemperature()); // puts string into buffer
+            
+                add_CRC(( char *)data_humTemp);
+            }
 
-        if( ESP_OK == uart_wait_tx_done(UART_PORT, TASK_DELAY))
-        {
-            uart_write_bytes(UART_PORT, data_humTemp, strlen(data_humTemp));
+            if( ESP_OK == uart_wait_tx_done(UART_PORT, TASK_DELAY))
+            {
+                uart_write_bytes(UART_PORT, data_humTemp, strlen(data_humTemp));
 
-            data_humTemp[0] = '\0';     // Reset buffer
+                data_humTemp[0] = '\0';     // Reset buffer
+            }
         }
 
         vTaskDelay(TASK_DELAY / portTICK_PERIOD_MS);
