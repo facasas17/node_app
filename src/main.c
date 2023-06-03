@@ -35,7 +35,7 @@
 #define TX_BUF_SIZE     1024
 #define TASK_DELAY      3000
 
-const char NODE_TAG[] = "NODE1";
+#define NODE_TAG        0x01
 
 /*******************************************************************************
  * Prototypes
@@ -48,7 +48,7 @@ static void mainTask(void *arg);
  * Variables
  ******************************************************************************/
 char data_humTemp[TX_BUF_SIZE];
-char rx_Node[RX_BUF_SIZE];
+uint8_t rx_Node;                    
 
 /*******************************************************************************
  * Code - private
@@ -78,7 +78,6 @@ static void add_CRC(char *buff)
 static void mainTask(void *arg)
 {
     int ret;
-    int res_uart;
 
     data_humTemp[0] = '\0';     // Reset buffer
     UART_config();
@@ -86,10 +85,9 @@ static void mainTask(void *arg)
     
     while (1) 
     {
-        uart_read_bytes(UART_PORT, rx_Node, strlen(rx_Node), TASK_DELAY);
-        res_uart = strncmp ((char *)rx_Node, (char *)NODE_TAG, strlen(NODE_TAG));
+        uart_read_bytes(UART_PORT, &rx_Node, 1, TASK_DELAY);
      
-        if( !res_uart )     // Si se recibe el mismo ID del nodo
+        if( rx_Node == NODE_TAG )     // Si se recibe el mismo ID del nodo
         {
             if(data_humTemp[0] == '\0')
             {
@@ -108,6 +106,10 @@ static void mainTask(void *arg)
 
                 data_humTemp[0] = '\0';     // Reset buffer
             }
+        }
+        else
+        {
+            uart_write_bytes(UART_PORT, "Hola\n", strlen("Hola\n"));
         }
 
         vTaskDelay(TASK_DELAY / portTICK_PERIOD_MS);
