@@ -5,6 +5,7 @@
         "string_view": "c",
         "ratio": "c",
         "stdio.h": "c",
-        "crc.h": "c"
+        "crc.h": "c",
+        "dht22.h": "c"
     }
 }

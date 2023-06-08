@@ -5,7 +5,7 @@
  * Version: 1.0
  * 
  */
-
+#define NODE_TEST   1
 /*******************************************************************************
  * Includes
  ******************************************************************************/
@@ -22,7 +22,7 @@
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
-#define DHT22_PIN       GPIO_NUM_4  
+#define DHT22_PIN       GPIO_NUM_2  
 
 #define UART_TXD        GPIO_NUM_17
 #define UART_RXD        GPIO_NUM_16
@@ -33,10 +33,17 @@
 
 #define RX_BUF_SIZE     1024
 #define TX_BUF_SIZE     1024
-#define TASK_DELAY      3000
+#define TASK_DELAY      2000
 
 #define NODE_TAG        0x01
+#define RE_DE_ESP32PIN  GPIO_NUM_4
 
+#define RS485_RECIEVE   0
+#define RS485_TRANSMIT  1
+
+#if NODE_TEST
+#define RE_DE_CP2102PIN GPIO_NUM_5
+#endif
 /*******************************************************************************
  * Prototypes
  ******************************************************************************/
@@ -48,7 +55,7 @@ static void mainTask(void *arg);
  * Variables
  ******************************************************************************/
 char data_humTemp[TX_BUF_SIZE];
-uint8_t rx_Node;                    
+uint8_t rx_Node = 0;                    
 
 /*******************************************************************************
  * Code - private
@@ -83,10 +90,25 @@ static void mainTask(void *arg)
     UART_config();
     DHT_SetGpio( DHT22_PIN );
     
+	gpio_set_direction( RE_DE_ESP32PIN, GPIO_MODE_OUTPUT );
+
+#if NODE_TEST
+    gpio_set_direction( RE_DE_CP2102PIN, GPIO_MODE_OUTPUT );
+    gpio_set_level( RE_DE_CP2102PIN, RS485_TRANSMIT ); 
+#endif
+         
+    gpio_set_level( RE_DE_ESP32PIN, RS485_RECIEVE );     
+
     while (1) 
     {
+       	gpio_set_level( RE_DE_ESP32PIN, RS485_RECIEVE );       
+          
+#if NODE_TEST
+        gpio_set_level( RE_DE_CP2102PIN, RS485_TRANSMIT );  
+#endif   
+
         uart_read_bytes(UART_PORT, &rx_Node, 1, TASK_DELAY);
-     
+
         if( rx_Node == NODE_TAG )     // Si se recibe el mismo ID del nodo
         {
             if(data_humTemp[0] == '\0')
@@ -100,16 +122,30 @@ static void mainTask(void *arg)
                 add_CRC(( char *)data_humTemp);
             }
 
+       	    gpio_set_level( RE_DE_ESP32PIN, RS485_TRANSMIT );       
+
+#if NODE_TEST
+            gpio_set_level( RE_DE_CP2102PIN, RS485_RECIEVE );  
+#endif
+
             if( ESP_OK == uart_wait_tx_done(UART_PORT, TASK_DELAY))
             {
                 uart_write_bytes(UART_PORT, data_humTemp, strlen(data_humTemp));
 
                 data_humTemp[0] = '\0';     // Reset buffer
             }
+
+            rx_Node = 0;   // Limpio el valor recibido.
         }
         else
         {
-            uart_write_bytes(UART_PORT, "Hola\n", strlen("Hola\n"));
+
+#if NODE_TEST
+       	    gpio_set_level( RE_DE_ESP32PIN, RS485_TRANSMIT );       
+            gpio_set_level( RE_DE_CP2102PIN, RS485_RECIEVE );  
+            uart_write_bytes(UART_PORT, "Sin pedido de data\n", strlen("Sin pedido de data\n"));
+#endif 
+           
         }
 
         vTaskDelay(TASK_DELAY / portTICK_PERIOD_MS);
