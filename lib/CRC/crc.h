@@ -22,6 +22,29 @@
 /*******************************************************************************
  * API
  ******************************************************************************/
-uint8_t calc_crc(uint8_t *data, size_t len) ;
+// uint8_t calc_crc(uint8_t *data, size_t len) ;
+uint8_t crc_calc(uint8_t val, void *buf, int len);
 
 #endif /* CRC_CRC_H_ */
+
+
+// /*
+//  * CRC8-CCITT, with normal polynomial; 0x07.
+//  */
+
+// #ifndef _CRC8_H_
+// #define _CRC8_H_
+
+// #include <inttypes.h>
+
+// #ifdef __cplusplus
+// extern "C" {
+// #endif
+
+// uint8_t crc8_calc(uint8_t val, void *buf, int cnt);
+
+// #ifdef __cplusplus
+// }
+// #endif
+
+// #endif

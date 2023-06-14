@@ -6,6 +6,7 @@
         "ratio": "c",
         "stdio.h": "c",
         "crc.h": "c",
-        "dht22.h": "c"
+        "dht22.h": "c",
+        "uart.h": "c"
     }
 }

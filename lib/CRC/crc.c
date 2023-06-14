@@ -22,7 +22,10 @@
 /*******************************************************************************
  * Variables
  ******************************************************************************/
-
+static uint8_t crc8_small_table[16] = {
+    0x00, 0x07, 0x0e, 0x09, 0x1c, 0x1b, 0x12, 0x15,
+    0x38, 0x3f, 0x36, 0x31, 0x24, 0x23, 0x2a, 0x2d
+};
 /*******************************************************************************
  * Code - private
  ******************************************************************************/
@@ -30,23 +33,35 @@
 /*******************************************************************************
  * Code - public
  ******************************************************************************/
-uint8_t calc_crc(uint8_t *data, size_t len) 
+// uint8_t calc_crc(uint8_t *data, size_t len) 
+// {
+//     uint8_t crc = 0;
+//     size_t i;
+//     uint8_t j;
+
+//     for (i = 0; i < len; i++) 
+//     {
+//         crc ^= data[i];
+//         for (j = 0; j < 8; j++) 
+//         {
+//             if (crc & 0x80)
+//                 crc = (crc << 1) ^ CRC_POLY;
+//             else
+//                 crc <<= 1;
+//         }
+//     }
+//     return crc;
+// }
+
+uint8_t crc_calc(uint8_t val, void *buf, int len)
 {
-    uint8_t crc = 0;
-    size_t i;
-    uint8_t j;
+	int i;
+	uint8_t *p = buf;
 
-    for (i = 0; i < len; i++) 
+	for (i = 0; i < len; i++) 
     {
-        crc ^= data[i];
-        for (j = 0; j < 8; j++) 
-        {
-            if (crc & 0x80)
-                crc = (crc << 1) ^ CRC_POLY;
-            else
-                crc <<= 1;
-        }
-    }
-    return crc;
+		val ^= p[i];
+		val = (val << 4) ^ crc8_small_table[val >> 4];
+	}
+	return val;
 }
-

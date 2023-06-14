@@ -78,7 +78,7 @@ static void UART_config(void)
 
 static void add_CRC(char *buff)
 {
-    uint8_t crc = calc_crc((uint8_t *)buff, strlen(buff));
+    uint8_t crc = crc_calc(0, (uint8_t *)buff, strlen(buff));
     sprintf(buff + strlen(buff), "\r\n%02X\r\n", crc);
 }
 
@@ -116,8 +116,8 @@ static void mainTask(void *arg)
                 ret = DHT_ReadData();
                 DHT_ErrorHandler(ret);
 
-                sprintf(data_humTemp, "Hum %.1f  ", DHT_GetHumidity()); // puts string into buffer
-                sprintf(data_humTemp + strlen(data_humTemp), "Tmp %.1f", DHT_GetTemperature()); // puts string into buffer
+                uint16_t total = sprintf(data_humTemp, "Hum %.1f  ", DHT_GetHumidity()); // puts string into buffer
+                sprintf(data_humTemp + total, "Tmp %.1f", DHT_GetTemperature()); // puts string into buffer
             
                 add_CRC(( char *)data_humTemp);
             }
