@@ -13,6 +13,7 @@
  * Includes
  ******************************************************************************/
 #include "driver/uart.h"
+#include "driver/gpio.h"
 #include "freertos/FreeRTOS.h"
 
 /*******************************************************************************
@@ -68,5 +69,25 @@ void UART_ReadData(uint8_t port, char *data, uint16_t len);
  * 
 */
 uart_status_t UART_WaitTX(uint8_t port);
+
+/*
+ * @brief Configure DE/RE GPIO for MAX485
+ *
+ * @param pin GPIO for DE/RE pin
+ * 
+*/
+void RS485_ConfigGPIO(uint8_t pin);
+
+/*
+ * @brief Set GPIO high to enable transmision
+ * 
+*/
+void RS485_EnableSendData(void);
+
+/*
+ * @brief Set GPIO low to enable reception
+ * 
+*/
+void RS485_EnableReceiveData(void);
 
 #endif /* UARTDRIVER_UARTDRIVER_H_ */

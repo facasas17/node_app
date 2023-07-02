@@ -26,6 +26,7 @@
 /*******************************************************************************
  * Variables
  ******************************************************************************/
+uint8_t RS485_pin;
 
 /*******************************************************************************
  * Code - private
@@ -69,4 +70,21 @@ void UART_ReadData(uint8_t port, char *data, uint16_t len)
 uart_status_t UART_WaitTX(uint8_t port)
 {
     return uart_wait_tx_done(port, UART_DELAY);
+}
+
+/************************ ---RS485--- ************************/
+void RS485_ConfigGPIO(uint8_t pin)
+{
+    RS485_pin = pin;
+    gpio_set_direction( pin, GPIO_MODE_OUTPUT );
+}
+
+void RS485_EnableSendData(void)
+{
+    gpio_set_level( RS485_pin, 1 );
+}
+
+void RS485_EnableReceiveData(void)
+{
+    gpio_set_level( RS485_pin, 0 );
 }
