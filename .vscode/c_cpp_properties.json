@@ -122,6 +122,7 @@
                 "C:/Users/USUARIO/.platformio/packages/framework-espidf/components/ulp/ulp_common/include/esp32",
                 "C:/Users/USUARIO/.platformio/packages/framework-espidf/components/wifi_provisioning/include",
                 "c:/Users/USUARIO/OneDrive/Documentos/Proyecto_CESE/node_app/lib/UART",
+                "c:/Users/USUARIO/OneDrive/Documentos/Proyecto_CESE/node_app/lib/protocol",
                 ""
             ],
             "browse": {
@@ -241,6 +242,7 @@
                     "C:/Users/USUARIO/.platformio/packages/framework-espidf/components/ulp/ulp_common/include/esp32",
                     "C:/Users/USUARIO/.platformio/packages/framework-espidf/components/wifi_provisioning/include",
                     "c:/Users/USUARIO/OneDrive/Documentos/Proyecto_CESE/node_app/lib/UART",
+                    "c:/Users/USUARIO/OneDrive/Documentos/Proyecto_CESE/node_app/lib/protocol",
                     ""
                 ]
             },

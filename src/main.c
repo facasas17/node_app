@@ -56,7 +56,7 @@ static void mainTask(void *arg);
  ******************************************************************************/
 char data_humTemp[TX_BUF_SIZE];
 uint8_t rx_Node = 0;                    
-
+QueueHandle_t uart_queue;
 /*******************************************************************************
  * Code - private
  ******************************************************************************/
@@ -71,10 +71,15 @@ static void UART_config(void)
         .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
         .source_clk = UART_SCLK_APB,
     };
-    uart_driver_install(UART_PORT, RX_BUF_SIZE * 2, TX_BUF_SIZE, 0, NULL, 0);
+    uart_driver_install(UART_PORT, RX_BUF_SIZE * 2, TX_BUF_SIZE, 4, &uart_queue, 0);
     uart_param_config(UART_PORT, &uart_config);
     uart_set_pin(UART_PORT, UART_TXD, UART_RXD, UART_RTS, UART_CTS);
+
+    uart_enable_pattern_det_baud_intr(UART_PORT, NODE_TAG, 1, 9, 0, 0);
+    //Reset the pattern queue length to record at most 20 pattern positions.
+    uart_pattern_queue_reset(UART_PORT, 2);
 }
+
 
 static void add_CRC(char *buff)
 {
@@ -85,8 +90,10 @@ static void add_CRC(char *buff)
 static void mainTask(void *arg)
 {
     int ret;
+    uart_event_t event;
 
-    data_humTemp[0] = '\0';     // Reset buffer
+    memset(data_humTemp, 0, 1024);      // Reset buffer
+   
     UART_config();
     DHT_SetGpio( DHT22_PIN );
     
@@ -107,47 +114,50 @@ static void mainTask(void *arg)
         gpio_set_level( RE_DE_CP2102PIN, RS485_TRANSMIT );  
 #endif   
 
-        uart_read_bytes(UART_PORT, &rx_Node, 1, TASK_DELAY);
-
-        if( rx_Node == NODE_TAG )     // Si se recibe el mismo ID del nodo
-        {
-            if(data_humTemp[0] == '\0')
+        if (xQueueReceive(uart_queue, (void *)&event, portMAX_DELAY))
+        {      
+            // Check if it's a UART data event.
+            if (event.type == UART_PATTERN_DET)
             {
-                ret = DHT_ReadData();
-                DHT_ErrorHandler(ret);
+                uart_read_bytes(UART_PORT, &rx_Node, 1, TASK_DELAY);
 
-                uint16_t total = sprintf(data_humTemp, "Hum %.1f  ", DHT_GetHumidity()); // puts string into buffer
-                sprintf(data_humTemp + total, "Tmp %.1f", DHT_GetTemperature()); // puts string into buffer
-            
-                add_CRC(( char *)data_humTemp);
+                if(data_humTemp[0] == '\0')
+                {
+                    ret = DHT_ReadData();
+                    DHT_ErrorHandler(ret);
+
+                    uint16_t total = sprintf(data_humTemp, "Hum %.1f  ", DHT_GetHumidity()); // puts string into buffer
+                    sprintf(data_humTemp + total, "Tmp %.1f", DHT_GetTemperature()); // puts string into buffer
+                    
+                    add_CRC(( char *)data_humTemp);
+                }
+
+                gpio_set_level( RE_DE_ESP32PIN, RS485_TRANSMIT );       
+
+        #if NODE_TEST
+                gpio_set_level( RE_DE_CP2102PIN, RS485_RECIEVE );  
+        #endif
+
+                if( ESP_OK == uart_wait_tx_done(UART_PORT, TASK_DELAY))
+                {
+                    uart_write_bytes(UART_PORT, data_humTemp, strlen(data_humTemp));
+
+                    data_humTemp[0] = '\0';     // Reset buffer
+                }
+
+                rx_Node = 0;   // Limpio el valor recibido.
             }
-
-       	    gpio_set_level( RE_DE_ESP32PIN, RS485_TRANSMIT );       
-
-#if NODE_TEST
-            gpio_set_level( RE_DE_CP2102PIN, RS485_RECIEVE );  
-#endif
-
-            if( ESP_OK == uart_wait_tx_done(UART_PORT, TASK_DELAY))
+            else
             {
-                uart_write_bytes(UART_PORT, data_humTemp, strlen(data_humTemp));
 
-                data_humTemp[0] = '\0';     // Reset buffer
-            }
-
-            rx_Node = 0;   // Limpio el valor recibido.
+        #if NODE_TEST
+                gpio_set_level( RE_DE_ESP32PIN, RS485_TRANSMIT );       
+                gpio_set_level( RE_DE_CP2102PIN, RS485_RECIEVE );  
+                uart_write_bytes(UART_PORT, "Sin pedido de data\n", strlen("Sin pedido de data\n"));
+        #endif 
+                
+            } 
         }
-        else
-        {
-
-#if NODE_TEST
-       	    gpio_set_level( RE_DE_ESP32PIN, RS485_TRANSMIT );       
-            gpio_set_level( RE_DE_CP2102PIN, RS485_RECIEVE );  
-            uart_write_bytes(UART_PORT, "Sin pedido de data\n", strlen("Sin pedido de data\n"));
-#endif 
-           
-        }
-
         vTaskDelay(TASK_DELAY / portTICK_PERIOD_MS);
     }
 }
@@ -159,3 +169,4 @@ void app_main(void)
 {
     xTaskCreate(mainTask, "main_task", 1024*2, NULL, configMAX_PRIORITIES-2, NULL);
 }
+
