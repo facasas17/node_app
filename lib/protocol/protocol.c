@@ -55,7 +55,7 @@ uint16_t build_Frame(char *data_buff, UartFrame *frame)
 {
     uint16_t len_data;
 
-    len_data = sprintf(data_buff, "%X%X%X%X\n", frame->address, frame->actionCode, frame->flagStatus, frame->crc);
+    len_data = sprintf(data_buff, "%X%X%X%lu%X\n", frame->address, frame->actionCode, frame->flagStatus, frame->payload,frame->crc);
     return len_data;
 }
                 
