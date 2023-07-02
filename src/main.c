@@ -21,6 +21,8 @@
 #include "DHT22.h"
 #include "crc.h"
 #include "uartDriver.h"
+
+#include "protocol.h"
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
@@ -73,7 +75,12 @@ static void mainTask(void *arg)
     uart_event_t event;
 
     memset(data_humTemp, 0, BUF_SIZE);      // Reset buffer
-
+    
+    // Create a frame and set its values
+    UartFrame myFrame;
+    setUartFrame(&myFrame, 0x01, 0x03, 0x02, 0x00CD1234, 0x7F);
+    len_data = build_Frame(data_humTemp, &myFrame);
+    
     UART_Config(UART_PORT, UART_BAUDRATE, BUF_SIZE, UART_TXD, UART_RXD, &uart_queue);
     DHT_SetGpio( DHT22_PIN );
     
@@ -99,10 +106,10 @@ static void mainTask(void *arg)
                 ret = DHT_ReadData();
                 DHT_ErrorHandler(ret);
 
-                len_data = sprintf(data_humTemp, "Hum %.1f  ", DHT_GetHumidity());
-                len_data += sprintf(data_humTemp + len_data, "Tmp %.1f", DHT_GetTemperature()); 
+                // len_data = sprintf(data_humTemp, "Hum %.1f  ", DHT_GetHumidity());
+                // len_data += sprintf(data_humTemp + len_data, "Tmp %.1f", DHT_GetTemperature()); 
                     
-                len_data += add_CRC(( char *)data_humTemp);
+                // len_data += add_CRC(( char *)data_humTemp);
 
                 RS485_EnableSendData();
 
@@ -113,6 +120,7 @@ static void mainTask(void *arg)
                 if( UART_OK == UART_WaitTX(UART_PORT))
                 {
                     UART_SendData(UART_PORT, data_humTemp, len_data);
+                    
                     memset(data_humTemp, 0, BUF_SIZE);      // Reset buffer
                 }
             }
