@@ -10,8 +10,10 @@
             "includePath": [
                 "c:/Users/USUARIO/OneDrive/Documentos/Proyecto_CESE/node_app/include",
                 "c:/Users/USUARIO/OneDrive/Documentos/Proyecto_CESE/node_app/src",
-                "c:/Users/USUARIO/OneDrive/Documentos/Proyecto_CESE/node_app/lib/DHT22",
+                "c:/Users/USUARIO/OneDrive/Documentos/Proyecto_CESE/node_app/lib/protocol",
+                "c:/Users/USUARIO/OneDrive/Documentos/Proyecto_CESE/node_app/lib/UART",
                 "c:/Users/USUARIO/OneDrive/Documentos/Proyecto_CESE/node_app/lib/CRC",
+                "c:/Users/USUARIO/OneDrive/Documentos/Proyecto_CESE/node_app/lib/DHT22",
                 "C:/Users/USUARIO/.platformio/packages/framework-espidf/components/xtensa/include",
                 "C:/Users/USUARIO/.platformio/packages/framework-espidf/components/xtensa/esp32/include",
                 "C:/Users/USUARIO/OneDrive/Documentos/Proyecto_CESE/node_app/.pio/build/esp32dev/config",
@@ -121,8 +123,6 @@
                 "C:/Users/USUARIO/.platformio/packages/framework-espidf/components/ulp/ulp_common/include",
                 "C:/Users/USUARIO/.platformio/packages/framework-espidf/components/ulp/ulp_common/include/esp32",
                 "C:/Users/USUARIO/.platformio/packages/framework-espidf/components/wifi_provisioning/include",
-                "c:/Users/USUARIO/OneDrive/Documentos/Proyecto_CESE/node_app/lib/UART",
-                "c:/Users/USUARIO/OneDrive/Documentos/Proyecto_CESE/node_app/lib/protocol",
                 ""
             ],
             "browse": {
@@ -130,8 +130,10 @@
                 "path": [
                     "c:/Users/USUARIO/OneDrive/Documentos/Proyecto_CESE/node_app/include",
                     "c:/Users/USUARIO/OneDrive/Documentos/Proyecto_CESE/node_app/src",
-                    "c:/Users/USUARIO/OneDrive/Documentos/Proyecto_CESE/node_app/lib/DHT22",
+                    "c:/Users/USUARIO/OneDrive/Documentos/Proyecto_CESE/node_app/lib/protocol",
+                    "c:/Users/USUARIO/OneDrive/Documentos/Proyecto_CESE/node_app/lib/UART",
                     "c:/Users/USUARIO/OneDrive/Documentos/Proyecto_CESE/node_app/lib/CRC",
+                    "c:/Users/USUARIO/OneDrive/Documentos/Proyecto_CESE/node_app/lib/DHT22",
                     "C:/Users/USUARIO/.platformio/packages/framework-espidf/components/xtensa/include",
                     "C:/Users/USUARIO/.platformio/packages/framework-espidf/components/xtensa/esp32/include",
                     "C:/Users/USUARIO/OneDrive/Documentos/Proyecto_CESE/node_app/.pio/build/esp32dev/config",
@@ -241,8 +243,6 @@
                     "C:/Users/USUARIO/.platformio/packages/framework-espidf/components/ulp/ulp_common/include",
                     "C:/Users/USUARIO/.platformio/packages/framework-espidf/components/ulp/ulp_common/include/esp32",
                     "C:/Users/USUARIO/.platformio/packages/framework-espidf/components/wifi_provisioning/include",
-                    "c:/Users/USUARIO/OneDrive/Documentos/Proyecto_CESE/node_app/lib/UART",
-                    "c:/Users/USUARIO/OneDrive/Documentos/Proyecto_CESE/node_app/lib/protocol",
                     ""
                 ]
             },

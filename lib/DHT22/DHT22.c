@@ -43,8 +43,8 @@ static const char* TAG = "DHT";
  ******************************************************************************/
 uint8_t DHT_GPIO;				// my default DHT pin = 4
 
-float humidity = 0.;
-float temperature = 0.;
+uint16_t humidity = 0;
+uint16_t temperature = 0;
 
 /*******************************************************************************
  * Prototypes
@@ -129,7 +129,7 @@ static void DHT_SeparateHumData(uint8_t *AllData)
 	humidity = AllData[0];
 	humidity *= 0x100;					// >> 8
 	humidity += AllData[1];
-	humidity /= 10;						// get the decimal
+	// humidity /= 10;						// get the decimal
 }
 
 static void DHT_SeparateTempData(uint8_t *AllData)
@@ -137,7 +137,7 @@ static void DHT_SeparateTempData(uint8_t *AllData)
 	temperature = AllData[2] & 0x7F;	
 	temperature *= 0x100;				// >> 8
 	temperature += AllData[3];
-	temperature /= 10;
+	// temperature /= 10;
 
 	if( AllData[2] & 0x80 ) 			// negative temp, brrr it's freezing
 		temperature *= -1;
@@ -240,19 +240,19 @@ int DHT_ReadData()
 	return DHT_CheckSum(dhtData);
 }
 
-float DHT_GetHumidity(void) 
+uint16_t DHT_GetHumidity(void) 
 { 
 	return humidity; 
 }
 
-float DHT_GetTemperature(void) 
+uint16_t DHT_GetTemperature(void) 
 { 
 	return temperature; 
 }
 
-void DHT_SetGpio(uint8_t gpio)
+void DHT_SetGpio(void)
 {
-	DHT_GPIO = gpio;
+	DHT_GPIO = DHT22_PIN;
 }
 
 void DHT_ErrorHandler(int response)

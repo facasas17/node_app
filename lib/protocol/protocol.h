@@ -17,27 +17,19 @@
 /*******************************************************************************
  * Definitions
 ******************************************************************************/
-
-// void Protocol_Init(uint8_t port_uart, uint32_t baudRate );
-
-// uint16_t protocol_wait_frame( char* data, uint16_t max_size );
-
-// uint8_t Protocol_SetFrame(char* data, uint16_t max_size);
-
-// uint8_t Protocol_SendFrame(char *data, uint16_t max_size);
-
 typedef struct {
     uint8_t address;
     uint8_t actionCode : 4;
     uint8_t flagStatus : 4;
     uint32_t payload;
-    uint8_t crc;
-} UartFrame;
+} protocol_frame_t;
+
 /*******************************************************************************
  * API
  ******************************************************************************/
-void setUartFrame(UartFrame *frame, uint8_t address, uint8_t actionCode, uint8_t flagStatus, uint32_t payload, uint8_t crc) ;
-void sendUartFrame(UartFrame *frame) ;
-uint16_t build_Frame(char *data_buff, UartFrame *frame);
+void protocol_setFrame(protocol_frame_t *frame, uint8_t address, uint8_t actionCode, uint8_t flagStatus, 
+                        uint16_t temp, uint16_t hum); 
+uint16_t protocol_buildFrame(char *data_buff, protocol_frame_t *frame);
+void protocol_readFrame();
 
 #endif /* PROTOCOL_PROTOCOL_H_ */

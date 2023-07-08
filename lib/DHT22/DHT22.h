@@ -24,10 +24,13 @@
 /*******************************************************************************
  * Includes
  ******************************************************************************/
+#include "driver/gpio.h"
 
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
+#define DHT22_PIN       	GPIO_NUM_2  
+
 #define DHT_OK 				0
 #define DHT_CHECKSUM_ERROR 	-1
 #define DHT_TIMEOUT_ERROR 	-2
@@ -43,17 +46,17 @@ int DHT_ReadData(void);
 /*
  * @brief Return Humidity measured in float
  */
-float DHT_GetHumidity(void);
+uint16_t DHT_GetHumidity(void);
 
 /*
  * @brief Return Temperature measured in float
  */
-float DHT_GetTemperature(void);
+uint16_t DHT_GetTemperature(void);
 
 /* 
  * @brief Set DHT GPIO 
  */
-void DHT_SetGpio(uint8_t gpio);
+void DHT_SetGpio(void);
 
 /*
  *	@brief Error Handler for timeout of data

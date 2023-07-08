@@ -20,6 +20,7 @@
 /*******************************************************************************
  * Prototypes
  ******************************************************************************/
+static int add_CRC(char *buff);
 
 /*******************************************************************************
  * Variables
@@ -28,41 +29,42 @@
 /*******************************************************************************
  * Code - private
  ******************************************************************************/
+int add_CRC(char *buff)
+{
+    uint16_t size_buff;
+    uint8_t crc;
+
+    size_buff = strlen(buff);
+    crc = crc_calc(0, (uint8_t *)buff, size_buff);
+
+    return sprintf(buff + size_buff, "%02X", crc);
+}
 
 /*******************************************************************************
  * Code - public
  ******************************************************************************/
 
-// uint8_t Protocol_SetFrame(char* data, uint16_t max_size)
-// {
-
-// }
-
-// Frame structure
-
-
-// Function to set up the frame
-void setUartFrame(UartFrame *frame, uint8_t address, uint8_t actionCode, uint8_t flagStatus, uint32_t payload, uint8_t crc) 
+// Function to set the data on the frame
+void protocol_setFrame(protocol_frame_t *frame, uint8_t address, uint8_t actionCode, uint8_t flagStatus, 
+                        uint16_t temp, uint16_t hum) 
 {
     frame->address = address;
     frame->actionCode = actionCode;
     frame->flagStatus = flagStatus;
-    frame->payload = payload;
-    frame->crc = crc;
+    frame->payload = ((uint32_t)temp << 16) | hum;
 }
 
-uint16_t build_Frame(char *data_buff, UartFrame *frame)
+// Function to build the data buffer to send
+uint16_t protocol_buildFrame(char *data_buff, protocol_frame_t *frame)
 {
     uint16_t len_data;
 
-    len_data = sprintf(data_buff, "%X%X%X%lu%X\n", frame->address, frame->actionCode, frame->flagStatus, frame->payload,frame->crc);
+    len_data = sprintf(data_buff, "%X%X%X%lu", frame->address, frame->actionCode, frame->flagStatus, frame->payload);
+    len_data += add_CRC(data_buff);
     return len_data;
 }
                 
-// Function to send a frame over UART
-void sendUartFrame(UartFrame *frame) 
+void protocol_readFrame()
 {
-    //uart_write_bytes(UART_PORT, (const char *)frame, sizeof(UartFrame));
+
 }
-
-

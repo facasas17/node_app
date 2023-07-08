@@ -5,38 +5,31 @@
  * Version: 1.0
  * 
  */
-#define NODE_TEST   1
+#define NODE_TEST   0
 /*******************************************************************************
  * Includes
  ******************************************************************************/
-#include <stdio.h>
-#include <string.h>
+// #include <stdio.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #if NODE_TEST
-#include "driver/uart.h"
 #include "driver/gpio.h"
+#include "driver/uart.h"
 #endif
 
 #include "DHT22.h"
-#include "crc.h"
 #include "uartDriver.h"
-
 #include "protocol.h"
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
-#define DHT22_PIN       GPIO_NUM_2  
-
-#define RE_DE_ESP32PIN  GPIO_NUM_4
-
-#define UART_TXD        GPIO_NUM_17
-#define UART_RXD        GPIO_NUM_16
 #define UART_BAUDRATE   115200
-#define UART_PORT       UART_NUM_2
+#define UART_PORT       UART_NUM_0
 
 #define BUF_SIZE        1024
 #define TASK_DELAY      500
+
+#define NODE_ADDRESS    0x01
 
 #if NODE_TEST
 #define RE_DE_CP2102PIN GPIO_NUM_5
@@ -46,45 +39,39 @@
 /*******************************************************************************
  * Prototypes
  ******************************************************************************/
-static int add_CRC(char *buff);
+static void hardware_config(void);
 static void mainTask(void *arg);
 
 /*******************************************************************************
  * Variables
  ******************************************************************************/
-char data_humTemp[BUF_SIZE];
+char data_buffer[BUF_SIZE];
 QueueHandle_t uart_queue;
+
+uint8_t prot_action = 0x01;
+uint8_t prot_flag = 0x01;
 /*******************************************************************************
  * Code - private
  ******************************************************************************/
-int add_CRC(char *buff)
+static void hardware_config(void)
 {
-    uint16_t size_buff;
-    uint8_t crc;
-
-    size_buff = strlen(buff);
-    crc = crc_calc(0, (uint8_t *)buff, size_buff);
-
-    return sprintf(buff + size_buff, "\r\n%02X\r\n", crc);
+    UART_Config(UART_PORT, UART_BAUDRATE, BUF_SIZE, &uart_queue, NODE_ADDRESS);
+    DHT_SetGpio();
+    
+    RS485_ConfigGPIO();
 }
 
 static void mainTask(void *arg)
 {
-    int ret;
+    int dht_error;
     uint16_t len_data = 0;
     uart_event_t event;
 
-    memset(data_humTemp, 0, BUF_SIZE);      // Reset buffer
+    protocol_frame_t frame;
+
+    memset(data_buffer, 0, BUF_SIZE);      // Reset buffer
     
-    // Create a frame and set its values
-    UartFrame myFrame;
-    setUartFrame(&myFrame, 0x01, 0x03, 0x02, 0x00CD1234, 0x7F);
-    len_data = build_Frame(data_humTemp, &myFrame);
-    
-    UART_Config(UART_PORT, UART_BAUDRATE, BUF_SIZE, UART_TXD, UART_RXD, &uart_queue);
-    DHT_SetGpio( DHT22_PIN );
-    
-    RS485_ConfigGPIO(RE_DE_ESP32PIN);
+    hardware_config();
 
 #if NODE_TEST
     gpio_set_direction( RE_DE_CP2102PIN, GPIO_MODE_OUTPUT );
@@ -103,13 +90,12 @@ static void mainTask(void *arg)
         {      
             if (event.type == UART_PATTERN_DET)
             {
-                ret = DHT_ReadData();
-                DHT_ErrorHandler(ret);
+                dht_error = DHT_ReadData();
+                DHT_ErrorHandler(dht_error);
+               
+                protocol_setFrame(&frame, NODE_ADDRESS, prot_action, prot_flag, DHT_GetTemperature(), DHT_GetHumidity()); 
 
-                // len_data = sprintf(data_humTemp, "Hum %.1f  ", DHT_GetHumidity());
-                // len_data += sprintf(data_humTemp + len_data, "Tmp %.1f", DHT_GetTemperature()); 
-                    
-                // len_data += add_CRC(( char *)data_humTemp);
+                len_data = protocol_buildFrame(data_buffer, &frame);
 
                 RS485_EnableSendData();
 
@@ -119,18 +105,17 @@ static void mainTask(void *arg)
 
                 if( UART_OK == UART_WaitTX(UART_PORT))
                 {
-                    UART_SendData(UART_PORT, data_humTemp, len_data);
-                    
-                    memset(data_humTemp, 0, BUF_SIZE);      // Reset buffer
+                    UART_SendData(UART_PORT, data_buffer, len_data);
+                    memset(data_buffer, 0, BUF_SIZE);      // Reset buffer
                 }
             }
             else
             {
 
         #if NODE_TEST
-                gpio_set_level( RE_DE_ESP32PIN, RS485_TRANSMIT );       
+                gpio_set_level( RE_DE_PIN, RS485_TRANSMIT );       
                 gpio_set_level( RE_DE_CP2102PIN, RS485_RECIEVE );  
-                UART_SendData(UART_PORT, "Sin pedido de data\n", strlen("Sin pedido de data\n"));
+                UART_SendData(UART_PORT, "\nSin pedido de data\n", strlen("\nSin pedido de data\n"));
         #endif 
                 
             } 

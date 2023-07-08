@@ -19,6 +19,13 @@
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
+#define UART0_TXD        GPIO_NUM_1
+#define UART0_RXD        GPIO_NUM_3
+
+#define UART2_TXD        GPIO_NUM_17
+#define UART2_RXD        GPIO_NUM_16
+
+#define RE_DE_PIN       GPIO_NUM_4      //Read Enable - Data enable MAX485 pin
 typedef enum{
     UART_OK,
     UART_FAIL   = -1
@@ -36,10 +43,10 @@ typedef enum{
  * @param tx_pin GPIO for TX data
  * @param rx_pin GPIO for RX data
  * @param data_queue queue to store data received through uart
+ * @param pattern character used for detection of data received
  * 
  */
-void UART_Config(uint8_t port, uint32_t baudrate, uint32_t buff_size, uint8_t tx_pin, 
-                    uint8_t rx_pin, QueueHandle_t *data_queue);
+void UART_Config(uint8_t port, uint32_t baudrate, uint32_t buff_size, QueueHandle_t *data_queue, uint8_t pattern);
 
 /*
  * @brief Send data through the UART
@@ -72,11 +79,9 @@ uart_status_t UART_WaitTX(uint8_t port);
 
 /*
  * @brief Configure DE/RE GPIO for MAX485
- *
- * @param pin GPIO for DE/RE pin
  * 
 */
-void RS485_ConfigGPIO(uint8_t pin);
+void RS485_ConfigGPIO(void);
 
 /*
  * @brief Set GPIO high to enable transmision
