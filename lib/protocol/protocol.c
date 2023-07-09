@@ -21,7 +21,7 @@
  * Prototypes
  ******************************************************************************/
 static int add_CRC(char *buff);
-
+static uint8_t check_CRC(char *buff);
 /*******************************************************************************
  * Variables
  ******************************************************************************/
@@ -29,7 +29,7 @@ static int add_CRC(char *buff);
 /*******************************************************************************
  * Code - private
  ******************************************************************************/
-int add_CRC(char *buff)
+static int add_CRC(char *buff)
 {
     uint16_t size_buff;
     uint8_t crc;
@@ -38,6 +38,14 @@ int add_CRC(char *buff)
     crc = crc_calc(0, (uint8_t *)buff, size_buff);
 
     return sprintf(buff + size_buff, "%02X", crc);
+}
+
+static uint8_t check_CRC(char *buff)
+{
+    uint16_t size_buff;
+
+    size_buff = strlen(buff);
+    return crc_calc(0, (uint8_t *)buff, size_buff-1);
 }
 
 /*******************************************************************************
@@ -64,7 +72,22 @@ uint16_t protocol_buildFrame(char *data_buff, protocol_frame_t *frame)
     return len_data;
 }
                 
-void protocol_readFrame()
+crc_status_t protocol_readFrame(char *data_buff, protocol_frame_t *frame)
 {
+    uint8_t crc;
 
+    frame->address = data_buff[0];
+    frame->actionCode = data_buff[1] >> 4;
+    frame->flagStatus = data_buff[1] & 0x0F;
+    memcpy(&(frame->payload), data_buff + 2, 4);
+    crc = data_buff[6];
+
+    if(crc == check_CRC(data_buff))
+    {
+        return CRC_OK;
+    }
+    else
+    {
+        return CRC_ERROR;
+    }
 }
