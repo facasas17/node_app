@@ -66,7 +66,8 @@ void protocol_setFrame(protocol_frame_t *frame, uint8_t address, uint8_t actionC
 uint16_t protocol_buildFrame(char *data_buff, protocol_frame_t *frame)
 {
     uint16_t len_data;
-
+    memset(data_buff, 0, strlen(data_buff));      // Reset buffer
+    
     len_data = sprintf(data_buff, "%X%X%X%lu", frame->address, frame->actionCode, frame->flagStatus, frame->payload);
     len_data += add_CRC(data_buff);
     return len_data;

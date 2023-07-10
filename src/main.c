@@ -5,7 +5,7 @@
  * Version: 1.0
  * 
  */
-#define NODE_TEST   0
+#define NODE_TEST   1
 /*******************************************************************************
  * Includes
  ******************************************************************************/
@@ -20,6 +20,9 @@
 #include "DHT22.h"
 #include "uartDriver.h"
 #include "protocol.h"
+
+#include "esp_mac.h"
+#include "crc.h"
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
@@ -27,9 +30,8 @@
 #define UART_PORT       UART_NUM_0
 
 #define BUF_SIZE        1024
+#define SIZE_MAC        6
 #define TASK_DELAY      500
-
-#define NODE_ADDRESS    0x01
 
 #if NODE_TEST
 #define RE_DE_CP2102PIN GPIO_NUM_5
@@ -46,16 +48,24 @@ static void mainTask(void *arg);
  * Variables
  ******************************************************************************/
 char data_buffer[BUF_SIZE];
+uint8_t node_address;
+
 QueueHandle_t uart_queue;
 
-uint8_t prot_action = 0x01;
-uint8_t prot_flag = 0x01;
+uint8_t prot_action = 0x02;
+uint8_t prot_flag = 0x02;
+
 /*******************************************************************************
  * Code - private
  ******************************************************************************/
 static void hardware_config(void)
 {
-    UART_Config(UART_PORT, UART_BAUDRATE, BUF_SIZE, &uart_queue, NODE_ADDRESS);
+    uint8_t base_mac_addr[SIZE_MAC] = {0};
+
+    esp_read_mac(base_mac_addr, ESP_MAC_WIFI_STA);
+    node_address = crc_calc(0, base_mac_addr, SIZE_MAC);
+
+    UART_Config(UART_PORT, UART_BAUDRATE, BUF_SIZE, &uart_queue, node_address);
     DHT_SetGpio();
     
     RS485_ConfigGPIO();
@@ -66,12 +76,10 @@ static void mainTask(void *arg)
     int dht_error;
     uint16_t len_data = 0;
     uart_event_t event;
-
     protocol_frame_t frame;
-
-    memset(data_buffer, 0, BUF_SIZE);      // Reset buffer
-    
+ 
     hardware_config();
+    memset(data_buffer, 0, BUF_SIZE);      // Reset buffer
 
 #if NODE_TEST
     gpio_set_direction( RE_DE_CP2102PIN, GPIO_MODE_OUTPUT );
@@ -92,8 +100,8 @@ static void mainTask(void *arg)
             {
                 dht_error = DHT_ReadData();
                 DHT_ErrorHandler(dht_error);
-               
-                protocol_setFrame(&frame, NODE_ADDRESS, prot_action, prot_flag, DHT_GetTemperature(), DHT_GetHumidity()); 
+
+                protocol_setFrame(&frame, node_address, prot_action, prot_flag, DHT_GetTemperature(), DHT_GetHumidity()); 
 
                 len_data = protocol_buildFrame(data_buffer, &frame);
 
@@ -106,7 +114,6 @@ static void mainTask(void *arg)
                 if( UART_OK == UART_WaitTX(UART_PORT))
                 {
                     UART_SendData(UART_PORT, data_buffer, len_data);
-                    memset(data_buffer, 0, BUF_SIZE);      // Reset buffer
                 }
             }
             else
