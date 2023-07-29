@@ -37,7 +37,7 @@ static int add_CRC(char *buff)
     size_buff = strlen(buff);
     crc = crc_calc(0, (uint8_t *)buff, size_buff);
 
-    return sprintf(buff + size_buff, "%02X", crc);
+    return sprintf(buff + size_buff, "%d", crc);
 }
 
 static uint8_t check_CRC(char *buff)
@@ -68,8 +68,9 @@ uint16_t protocol_buildFrame(char *data_buff, protocol_frame_t *frame)
     uint16_t len_data;
     memset(data_buff, 0, strlen(data_buff));      // Reset buffer
     
-    len_data = sprintf(data_buff, "%X%X%X%lu", frame->address, frame->actionCode, frame->flagStatus, frame->payload);
+    len_data = sprintf(data_buff, "%d%d%d%lu", frame->address, frame->actionCode, frame->flagStatus, frame->payload);
     len_data += add_CRC(data_buff);
+    
     return len_data;
 }
                 

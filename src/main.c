@@ -5,7 +5,7 @@
  * Version: 1.0
  * 
  */
-#define NODE_TEST   1
+#define NODE_TEST   0
 /*******************************************************************************
  * Includes
  ******************************************************************************/
@@ -48,22 +48,22 @@ static void mainTask(void *arg);
  * Variables
  ******************************************************************************/
 char data_buffer[BUF_SIZE];
-uint8_t node_address;
+uint8_t node_address = 0x02;
 
 QueueHandle_t uart_queue;
 
 uint8_t prot_action = 0x02;
-uint8_t prot_flag = 0x02;
+uint8_t prot_flag = 0x03;
 
 /*******************************************************************************
  * Code - private
  ******************************************************************************/
 static void hardware_config(void)
 {
-    uint8_t base_mac_addr[SIZE_MAC] = {0};
+    // uint8_t base_mac_addr[SIZE_MAC] = {0};
 
-    esp_read_mac(base_mac_addr, ESP_MAC_WIFI_STA);
-    node_address = crc_calc(0, base_mac_addr, SIZE_MAC);
+    // esp_read_mac(base_mac_addr, ESP_MAC_WIFI_STA);
+    // node_address = crc_calc(0, base_mac_addr, SIZE_MAC);
 
     UART_Config(UART_PORT, UART_BAUDRATE, BUF_SIZE, &uart_queue, node_address);
     DHT_SetGpio();
