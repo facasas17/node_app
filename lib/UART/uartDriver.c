@@ -33,16 +33,16 @@ static void UART_setGPIO(uint8_t port)
 {
     switch (port)
     {
-    case UART_NUM_0:
-        uart_set_pin(port, UART0_TXD, UART0_RXD, UART_RTS, UART_CTS);
-        break;
+        case UART_NUM_0:
+            uart_set_pin(port, UART0_TXD, UART0_RXD, UART_RTS, UART_CTS);
+            break;
 
-    case UART_NUM_2:
-        uart_set_pin(port, UART2_TXD, UART2_RXD, UART_RTS, UART_CTS);
-        break;
-    
-    default:
-        break;
+        case UART_NUM_2:
+            uart_set_pin(port, UART2_TXD, UART2_RXD, UART_RTS, UART_CTS);
+            break;
+        
+        default:
+            break;
     }
 }
 /*******************************************************************************

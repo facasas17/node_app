@@ -129,7 +129,6 @@ static void DHT_SeparateHumData(uint8_t *AllData)
 	humidity = AllData[0];
 	humidity *= 0x100;					// >> 8
 	humidity += AllData[1];
-	// humidity /= 10;						// get the decimal
 }
 
 static void DHT_SeparateTempData(uint8_t *AllData)
@@ -137,7 +136,6 @@ static void DHT_SeparateTempData(uint8_t *AllData)
 	temperature = AllData[2] & 0x7F;	
 	temperature *= 0x100;				// >> 8
 	temperature += AllData[3];
-	// temperature /= 10;
 
 	if( AllData[2] & 0x80 ) 			// negative temp, brrr it's freezing
 		temperature *= -1;

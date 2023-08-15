@@ -31,7 +31,7 @@ typedef enum{
 /*******************************************************************************
  * API
  ******************************************************************************/
-/* 
+/** 
  * @brief Set variables of frame structure
  * 
  * @param frame
@@ -45,7 +45,7 @@ typedef enum{
 void protocol_setFrame(protocol_frame_t *frame, uint8_t address, uint8_t actionCode, uint8_t flagStatus, 
                         uint16_t temp, uint16_t hum); 
 
-/*
+/**
  * @brief Build frame in data buffer to send over communication port
  *
  * @param data_buff buffer to store frame 
@@ -55,7 +55,7 @@ void protocol_setFrame(protocol_frame_t *frame, uint8_t address, uint8_t actionC
 */                 
 uint16_t protocol_buildFrame(char *data_buff, protocol_frame_t *frame);
 
-/*
+/**
  * @brief Read buffer received and separate into frame parameters
  *
  * @param data_buff buffer where data was received 

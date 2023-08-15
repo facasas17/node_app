@@ -34,7 +34,7 @@ typedef enum{
 /*******************************************************************************
  * API
  ******************************************************************************/
-/* 
+/** 
  * @brief Configure parameters of an UART driver, communication pins and install the driver 
  * 
  * @param port UART to configure
@@ -48,7 +48,7 @@ typedef enum{
  */
 void UART_Config(uint8_t port, uint32_t baudrate, uint32_t buff_size, QueueHandle_t *data_queue, uint8_t pattern);
 
-/*
+/**
  * @brief Send data through the UART
  *
  * @param port UART to send data through
@@ -58,7 +58,7 @@ void UART_Config(uint8_t port, uint32_t baudrate, uint32_t buff_size, QueueHandl
 */
 void UART_SendData(uint8_t port, char *data, uint16_t len);
 
-/*
+/**
  * @brief Read data through the UART
  *
  * @param port UART to read data through
@@ -68,7 +68,7 @@ void UART_SendData(uint8_t port, char *data, uint16_t len);
 */
 void UART_ReadData(uint8_t port, char *data, uint16_t len);
 
-/*
+/**
  * @brief Wait for TX transfer to finish
  *
  * @param port UART to read data through
@@ -77,19 +77,19 @@ void UART_ReadData(uint8_t port, char *data, uint16_t len);
 */
 uart_status_t UART_WaitTX(uint8_t port);
 
-/*
+/**
  * @brief Configure DE/RE GPIO for MAX485
  * 
 */
 void RS485_ConfigGPIO(void);
 
-/*
+/**
  * @brief Set GPIO high to enable transmision
  * 
 */
 void RS485_EnableSendData(void);
 
-/*
+/**
  * @brief Set GPIO low to enable reception
  * 
 */

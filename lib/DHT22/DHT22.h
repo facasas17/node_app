@@ -38,27 +38,27 @@
 /*******************************************************************************
  * API
  ******************************************************************************/
-/*
+/**
  * @brief Initialize communication and request for data to DHT sensor
  */
 int DHT_ReadData(void);
 
-/*
+/**
  * @brief Return Humidity measured in float
  */
 uint16_t DHT_GetHumidity(void);
 
-/*
+/**
  * @brief Return Temperature measured in float
  */
 uint16_t DHT_GetTemperature(void);
 
-/* 
+/** 
  * @brief Set DHT GPIO 
  */
 void DHT_SetGpio(void);
 
-/*
+/**
  *	@brief Error Handler for timeout of data
 */
 void DHT_ErrorHandler(int response);

@@ -1,14 +1,5 @@
 {
     "files.associations": {
-        "array": "c",
-        "string": "c",
-        "string_view": "c",
-        "ratio": "c",
-        "stdio.h": "c",
-        "crc.h": "c",
-        "dht22.h": "c",
-        "uart.h": "c",
-        "protocol.h": "c",
         "uartdriver.h": "c"
     }
 }
